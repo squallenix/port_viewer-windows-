@@ -23,6 +23,7 @@ Built with Python, **CustomTkinter** (Windows 11 Fluent Dark UI), and **psutil**
 - **⚡ Instant Real-Time Search**: Filter in real time as you type by Port Number (e.g., `3000`, `8080`, `5432`), Process Name (`node.exe`, `python.exe`), or PID.
 - **🎛️ Filter Presets**: Instant tabs for **Listening Only (Servers)**, **All Ports**, **TCP Only**, and **UDP Only**.
 - **🔄 Auto-Refresh**: Configurable background polling (`Off`, `3s`, `5s`, `10s`) using asynchronous background threads so the UI never freezes or stutters.
+- **📜 Mandatory First-Run EULA & Disclaimer**: Clear legal terms require users to accept that this software is for study and solo use at their own risk before using the application.
 - **🛡️ Built-in Security Hardening**: Hardened against command injection, process hijacking, TOCTOU race conditions, and accidental Windows BSOD crashes.
 - **📦 Single-File `.exe`**: Portable standalone executable requiring zero installation.
 
@@ -154,5 +155,13 @@ port_viewer/
 
 ---
 
-## 📄 License
-MIT License. Open source and free for personal and commercial use.
+## 📜 License & Legal Disclaimer
+
+This software is released under the **Port Viewer Educational Open-Source Agreement (Version 1.0)**. Full text is available in the [**`LICENSE`**](file:///e:/Code/port_viewer(windows)/LICENSE) file.
+
+### Key Terms:
+1. **Educational, Research & Solo Study Use Only**: Provided strictly for personal study, academic testing, and individual experimentation.
+2. **At User's Own Exclusive Risk**: Managing network ports and terminating processes (PID kill) carries inherent risks of unsaved data loss or background service interruption. Every action is performed solely at the user's independent self-decision.
+3. **Zero Liability & No Blame Clause**: Under no circumstances shall the author, developers, or contributors be blamed, accused, sued, or held liable for any damages, computer crashes, data loss, downtime, or legal claims resulting from the use or misuse of this software.
+4. **Mandatory Acceptance**: Users must explicitly agree to these terms via the first-run agreement dialog or setup script before using the application.
+5. **No Warranty ("AS IS")**: The software is provided without warranties of any kind.

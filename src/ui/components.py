@@ -1,9 +1,11 @@
+import sys
 import customtkinter as ctk
 import tkinter as tk
 from typing import Callable, Optional
 from src.ui.theme import COLORS, get_status_color
 from src.port_scanner import PortItem
 from src.security import restart_as_admin
+from src.license import get_license_text, set_accepted_license
 
 class StatCard(ctk.CTkFrame):
     """Modern dashboard stat card."""
@@ -197,3 +199,212 @@ class AdminNoticeDialog(ctk.CTkToplevel):
     def _elevate(self):
         self.destroy()
         restart_as_admin()
+
+
+class LicenseAgreementDialog(ctk.CTkToplevel):
+    """
+    Mandatory License & Disclaimer Dialog.
+    Enforces that the user explicitly reviews and agrees to the terms:
+    - Open source software for study and solo use only.
+    - Used at user's own exclusive risk and self-decision.
+    - Zero liability and complete disclaimer protecting the author.
+    """
+    def __init__(
+        self,
+        parent,
+        require_agreement: bool = False,
+        on_agree: Optional[Callable[[], None]] = None,
+        on_decline: Optional[Callable[[], None]] = None
+    ):
+        super().__init__(parent)
+        self.require_agreement = require_agreement
+        self.on_agree = on_agree
+        self.on_decline = on_decline
+
+        title = "Software License & Disclaimer Agreement" if require_agreement else "Software License & Terms"
+        self.title(title)
+        self.geometry("720x620")
+        self.minsize(620, 500)
+        self.attributes("-topmost", True)
+        self.configure(fg_color=COLORS["bg_dark"])
+
+        # Center dialog relative to screen or parent
+        self.update_idletasks()
+        try:
+            pw = parent.winfo_width()
+            ph = parent.winfo_height()
+            if pw > 100 and ph > 100:
+                x = parent.winfo_x() + (pw // 2) - 360
+                y = parent.winfo_y() + (ph // 2) - 310
+            else:
+                sw = self.winfo_screenwidth()
+                sh = self.winfo_screenheight()
+                x = (sw // 2) - 360
+                y = (sh // 2) - 310
+            self.geometry(f"+{max(0, x)}+{max(0, y)}")
+        except Exception:
+            pass
+
+        if self.require_agreement:
+            self.protocol("WM_DELETE_WINDOW", self._on_window_close)
+
+        self._build_ui()
+        self.grab_set()
+
+    def _build_ui(self):
+        main_frame = ctk.CTkFrame(
+            self, fg_color=COLORS["card_bg"],
+            corner_radius=12, border_width=1, border_color=COLORS["card_border"]
+        )
+        main_frame.pack(fill="both", expand=True, padx=16, pady=16)
+
+        # Header Title
+        head_box = ctk.CTkFrame(main_frame, fg_color="transparent")
+        head_box.pack(fill="x", padx=16, pady=(16, 8))
+
+        title_lbl = ctk.CTkLabel(
+            head_box,
+            text="📜 Software License & Liability Disclaimer",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=COLORS["text_main"]
+        )
+        title_lbl.pack(anchor="w")
+
+        sub_lbl = ctk.CTkLabel(
+            head_box,
+            text="Open-source utility provided strictly for study and solo use • User's own exclusive risk",
+            font=ctk.CTkFont(size=12),
+            text_color=COLORS["text_muted"]
+        )
+        sub_lbl.pack(anchor="w", pady=(2, 0))
+
+        # Warning / Highlight Card
+        warning_box = ctk.CTkFrame(
+            main_frame, fg_color="#3B2606",
+            border_width=1, border_color="#B45309", corner_radius=8
+        )
+        warning_box.pack(fill="x", padx=16, pady=(0, 10))
+
+        warn_text = (
+            "⚠️ IMPORTANT: By using this software, you confirm that you are using it for educational\n"
+            "or solo study purposes only. Any actions taken (including terminating processes) are at\n"
+            "your own risk and self-decision. The author/contributors carry ZERO liability and cannot\n"
+            "be blamed or held responsible under any circumstances."
+        )
+        warn_lbl = ctk.CTkLabel(
+            warning_box, text=warn_text,
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#FDE68A", justify="left"
+        )
+        warn_lbl.pack(padx=12, pady=8, anchor="w")
+
+        # License text area (Scrollable)
+        text_frame = ctk.CTkFrame(main_frame, fg_color=COLORS["bg_dark"], corner_radius=8)
+        text_frame.pack(fill="both", expand=True, padx=16, pady=(0, 12))
+
+        self.textbox = ctk.CTkTextbox(
+            text_frame,
+            font=ctk.CTkFont(family="Consolas", size=11),
+            text_color=COLORS["text_main"],
+            fg_color="transparent",
+            wrap="word"
+        )
+        self.textbox.pack(fill="both", expand=True, padx=6, pady=6)
+        self.textbox.insert("1.0", get_license_text())
+        self.textbox.configure(state="disabled")
+
+        # Bottom Action Bar
+        bottom_box = ctk.CTkFrame(main_frame, fg_color="transparent")
+        bottom_box.pack(fill="x", padx=16, pady=(0, 12), side="bottom")
+
+        if self.require_agreement:
+            # Checkbox
+            self.agree_var = tk.BooleanVar(value=False)
+            self.checkbox = ctk.CTkCheckBox(
+                bottom_box,
+                text="I have read, understood, and accept these terms. I use this software at my own risk and self-decision.",
+                variable=self.agree_var,
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color=COLORS["text_main"],
+                command=self._on_check_toggle
+            )
+            self.checkbox.pack(anchor="w", pady=(0, 12))
+
+            # Buttons
+            btn_row = ctk.CTkFrame(bottom_box, fg_color="transparent")
+            btn_row.pack(fill="x")
+
+            decline_btn = ctk.CTkButton(
+                btn_row,
+                text="❌ Decline & Exit",
+                fg_color=COLORS["danger"],
+                hover_color=COLORS["danger_hover"],
+                text_color="#FFFFFF",
+                font=ctk.CTkFont(size=12, weight="bold"),
+                width=140,
+                command=self._on_decline
+            )
+            decline_btn.pack(side="left")
+
+            self.agree_btn = ctk.CTkButton(
+                btn_row,
+                text="✅ I Agree & Continue",
+                fg_color=COLORS["card_border"],
+                state="disabled",
+                font=ctk.CTkFont(size=12, weight="bold"),
+                width=180,
+                command=self._on_agree
+            )
+            self.agree_btn.pack(side="right")
+        else:
+            # Review mode (already accepted previously)
+            status_lbl = ctk.CTkLabel(
+                bottom_box,
+                text="✓ License accepted and active (Solo study & personal use at user's own risk)",
+                font=ctk.CTkFont(size=11),
+                text_color=COLORS["success"]
+            )
+            status_lbl.pack(side="left", pady=4)
+
+            close_btn = ctk.CTkButton(
+                bottom_box,
+                text="Close",
+                fg_color=COLORS["card_border"],
+                hover_color=COLORS["hover_bg"],
+                width=100,
+                command=self.destroy
+            )
+            close_btn.pack(side="right")
+
+    def _on_check_toggle(self):
+        if self.agree_var.get():
+            self.agree_btn.configure(
+                state="normal",
+                fg_color=COLORS["success"],
+                hover_color="#059669",
+                text_color="#FFFFFF"
+            )
+        else:
+            self.agree_btn.configure(
+                state="disabled",
+                fg_color=COLORS["card_border"],
+                text_color=COLORS["text_muted"]
+            )
+
+    def _on_agree(self):
+        set_accepted_license(True)
+        self.destroy()
+        if self.on_agree:
+            self.on_agree()
+
+    def _on_decline(self):
+        self.destroy()
+        if self.on_decline:
+            self.on_decline()
+        else:
+            sys.exit(0)
+
+    def _on_window_close(self):
+        # Closing the window on first-run is considered declining
+        self._on_decline()
+

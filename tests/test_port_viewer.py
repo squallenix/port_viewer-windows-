@@ -5,6 +5,13 @@ from src.security import validate_pid, is_critical_process, is_sensitive_process
 from src.port_scanner import scan_ports, PortItem
 from src.process_manager import terminate_process_by_pid
 from src.ui.app import PortViewerApp
+from src.license import (
+    has_accepted_license,
+    set_accepted_license,
+    get_license_text,
+    get_license_file_path,
+    LICENSE_VERSION
+)
 
 class TestSecurityAndProcessManager(unittest.TestCase):
     def test_pid_validation(self):
@@ -121,6 +128,26 @@ class TestSecurityAndProcessManager(unittest.TestCase):
         app.sort_ascending = False
         sorted_items = app._sort_items(items)
         self.assertEqual([x.memory_mb for x in sorted_items], [120.0, 80.0, 50.0])
+
+    def test_license_terms_and_acceptance(self):
+        text = get_license_text()
+        self.assertIn("EDUCATIONAL, RESEARCH & SOLO STUDY USE ONLY", text)
+        self.assertIn("AT USER'S OWN RISK & INDEPENDENT SELF-DECISION", text)
+        self.assertIn("ABSOLUTE DISCLAIMER OF WARRANTIES", text)
+        self.assertIn("COMPLETE LIMITATION OF LIABILITY & ZERO BLAME CLAUSE", text)
+        self.assertIn("INDEMNIFICATION & HOLD HARMLESS", text)
+
+        # Test set and check agreement
+        set_accepted_license(True)
+        self.assertTrue(has_accepted_license())
+
+        # Test set rejected
+        set_accepted_license(False)
+        self.assertFalse(has_accepted_license())
+
+        # Re-set accepted
+        set_accepted_license(True)
+        self.assertTrue(has_accepted_license())
 
 if __name__ == "__main__":
     unittest.main()

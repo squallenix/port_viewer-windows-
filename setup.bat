@@ -6,7 +6,32 @@ echo ========================================================
 echo       Port Viewer - Windows One-Click Installer
 echo ========================================================
 echo.
+echo ========================================================
+echo       SOFTWARE LICENSE & LIABILITY DISCLAIMER
+echo ========================================================
+echo Notice: Port Viewer is an open-source tool provided
+echo strictly for personal study and solo experimentation.
+echo.
+echo All actions (including inspecting ports and terminating
+echo processes) are performed at your own risk and self-decision.
+echo Under no circumstances shall the author or contributors be
+echo blamed, accused, or held liable for any damages, data loss,
+echo or system impacts.
+echo ========================================================
+echo.
+set /p AGREE="Do you accept and agree to these terms? (Y/N) [default: Y]: "
+if "%AGREE%"=="" set AGREE=Y
 
+if /i not "%AGREE%"=="Y" (
+    echo.
+    echo [DECLINED] You must accept the license terms to install or use Port Viewer.
+    echo Setup aborted.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo.
 where python >nul 2>nul
 if %ERRORLEVEL% equ 0 (
     set "PY_CMD=python"
@@ -33,6 +58,9 @@ call .\.venv\Scripts\python.exe -m pip install -r requirements.txt --quiet
 if not exist "assets\icon.ico" (
     call .\.venv\Scripts\python.exe generate_icon.py
 )
+
+:: Record license agreement
+call .\.venv\Scripts\python.exe -c "from src.license import set_accepted_license; set_accepted_license(True)" 2>nul
 
 :: Run security and module verification
 echo [3/3] Running security self-checks...

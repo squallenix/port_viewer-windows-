@@ -10,7 +10,8 @@ from src.port_scanner import scan_ports, PortItem
 from src.process_manager import terminate_process_by_pid, ProcessResult
 from src.security import is_admin, restart_as_admin
 from src.ui.theme import COLORS, get_status_color
-from src.ui.components import StatCard, ConfirmStopDialog, AdminNoticeDialog
+from src.ui.components import StatCard, ConfirmStopDialog, AdminNoticeDialog, LicenseAgreementDialog
+from src.license import has_accepted_license
 
 # Set overall appearance
 ctk.set_appearance_mode("Dark")
@@ -53,6 +54,31 @@ class PortViewerApp(ctk.CTk):
         self._build_table_area()
         self._build_status_bar()
 
+        # Check License & Disclaimer agreement
+        if not has_accepted_license():
+            self.withdraw()
+            self.after(60, self._show_first_run_license)
+
+    def _show_first_run_license(self):
+        LicenseAgreementDialog(
+            self,
+            require_agreement=True,
+            on_agree=self._on_license_accepted,
+            on_decline=self._on_license_declined
+        )
+
+    def _on_license_accepted(self):
+        self.deiconify()
+        self.lift()
+        self.focus_force()
+
+    def _on_license_declined(self):
+        self.destroy()
+        sys.exit(0)
+
+    def _show_license_review(self):
+        LicenseAgreementDialog(self, require_agreement=False)
+
     def _build_header(self):
         header_frame = ctk.CTkFrame(self, fg_color=COLORS["card_bg"], height=64, corner_radius=0)
         header_frame.pack(fill="x", side="top")
@@ -79,9 +105,21 @@ class PortViewerApp(ctk.CTk):
         )
         ver_badge.pack(side="left", padx=(10, 0))
 
-        # Admin Badge & Action
+        # Admin Badge & Actions
         right_box = ctk.CTkFrame(header_frame, fg_color="transparent")
         right_box.pack(side="right", padx=20, pady=10)
+
+        # License & Disclaimer review button
+        license_btn = ctk.CTkButton(
+            right_box, text="📜 License",
+            font=ctk.CTkFont(size=11),
+            fg_color=COLORS["card_border"],
+            hover_color=COLORS["hover_bg"],
+            text_color=COLORS["text_main"],
+            height=30, width=80,
+            command=self._show_license_review
+        )
+        license_btn.pack(side="right", padx=(10, 0))
 
         self.has_admin = is_admin()
         if self.has_admin:
